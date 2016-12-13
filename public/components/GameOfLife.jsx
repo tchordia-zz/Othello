@@ -47,8 +47,8 @@ var GameOfLife = React.createClass({
 
   joinRoom: function(event) {
     console.log(" JOIN ROOM " + this.input.value);
-    if (this.input.value == "main") {
-      alert('CANNOT JOIN MAIN');
+    if (this.input.value == "main" || !/^[a-z]+$/i.test(this.input.value)) {
+      alert('only letters are allowed, and cannot return to main');
     } else { 
       this.props.socket.emit('addMe', this.input.value);
     }
