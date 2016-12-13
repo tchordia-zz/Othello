@@ -18,7 +18,12 @@ var getReducer = function(socket, initialState) {
         alert('GAME OVER! You ' + str + '!');
 
         return _.assign({}, state, {
-          gameStarted: false
+          color: state.color,
+          myTurn: state.color === 1,
+          gameStarted: true,
+          roomName: state.roomName,
+          roomEmpty: state.roomEmpty,
+          cells: getCells(state)
         });
 
       case 'DISC':
