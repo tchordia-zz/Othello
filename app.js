@@ -50,6 +50,7 @@ io.on('connection', function(socket) {
 			} else {
 				socket.broadcast.to(name2).emit('playerDisc', {});
 				socket.leave(name2);
+				socket.emit('clear');
 			}
 		}
 		roomNames[socket.id] = name;

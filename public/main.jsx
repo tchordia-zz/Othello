@@ -26,7 +26,8 @@ socket.on('resign', g(actions.resignOpp));
 socket.on('playerDisc', g(actions.disc));
 socket.on('room_taken', function() {
 	alert('room taken');
-})
+});
+socket.on('clear', g(actions.clear));
 
 var gameOfLife = <GameOfLife store={store} socket={socket}/>;
 

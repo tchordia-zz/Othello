@@ -52,6 +52,12 @@ exports.resignOpp = function () {
   };
 };
 
+exports.clear = function() {
+  return {
+    type: "CLEAR"
+  }
+}
+
 
 exports.cellClicked = function (index ) {
   return {

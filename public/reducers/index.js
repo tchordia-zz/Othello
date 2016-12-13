@@ -32,6 +32,15 @@ var getReducer = function(socket, initialState) {
           cells: getCells(state)
         })
 
+      case 'CLEAR':
+        return _.assign({}, initialState, {
+          color: state.color,
+          myTurn: state.color === 1,
+          gameStarted: true,
+          roomName: state.roomName,
+          roomEmpty: state.roomEmpty,
+          cells: getCells(state)
+        })
 
       case 'RESIGN_OPP':
         alert('YOU WIN! Opponent Resigned');
