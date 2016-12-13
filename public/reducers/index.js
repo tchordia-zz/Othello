@@ -14,9 +14,6 @@ var getReducer = function(socket, initialState) {
 
       case 'GAME_END':
 
-        var str = (state.myScore > state.opponentScore) ? 'win' : (state.myScore === state.opponentScore) ? 'tie' : 'lose';
-        alert('GAME OVER! You ' + str + '!');
-
         return _.assign({}, state, {
           color: state.color,
           myTurn: state.color === 1,
@@ -113,13 +110,23 @@ var getReducer = function(socket, initialState) {
         }
         var numUpd = updateBoard(cells, action.index, false);
 
-        return _.assign({}, state, {
-          cells: cells,
-          myTurn: !state.myTurn,
-          opponentScore: state.opponentScore + numUpd + 1,
-          myScore: state.myScore - numUpd,
-          gameStarted: !gameOver(state)
-        });
+        if (gameOver(state)) {
+          return _.assign({}, initialState, {
+            color: state.color,
+            myTurn: state.color === 1,
+            gameStarted: true,
+            roomName: state.roomName,
+            roomEmpty: state.roomEmpty,
+            cells: getCells(state)
+          });
+        } else {
+          return _.assign({}, state, {
+            cells: cells,
+            myTurn: !state.myTurn,
+            opponentScore: state.opponentScore + numUpd + 1,
+            myScore: state.myScore - numUpd
+          });
+        }
 
       case 'CELL_CLICKED':
         console.log("GAME " + state.gameStarted);
@@ -135,34 +142,26 @@ var getReducer = function(socket, initialState) {
         });
 
         var numUpd = updateBoard(cells, action.index, true);
-        return _.assign({}, state, {
-          cells: cells,
-          myTurn: !state.myTurn,
-          myScore: state.myScore + numUpd + 1,
-          opponentScore: state.opponentScore - numUpd,
-          gameStarted: !gameOver(state)
-        });
+
+        if (gameOver(state)) {
+          return _.assign({}, initialState, {
+            color: state.color,
+            myTurn: state.color === 1,
+            gameStarted: true,
+            roomName: state.roomName,
+            roomEmpty: state.roomEmpty,
+            cells: getCells(state)
+          });
+        } else {
+          return _.assign({}, state, {
+            cells: cells,
+            myTurn: !state.myTurn,
+            myScore: state.myScore + numUpd + 1,
+            opponentScore: state.opponentScore - numUpd
+          });
+        }
 
 
-      case 'STOP':
-        timer.stop();
-        return _.assign({}, state, {});
-
-      case 'CLEAR':
-        timer.stop();
-        return _.assign({}, initialState, {});
-
-      case 'RANDOM_SEED':
-        var rcells = randomSeed(state);
-        return _.assign({}, state, {
-          cells: rcells
-        });
-
-      case 'IMPORT_SEED':
-        timer.stop();
-        return _.assign({}, state, {
-          cells: action.seed
-        });
     }
     return state;
   };

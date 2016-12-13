@@ -36,7 +36,9 @@ var GameOfLife = React.createClass({
 
   newGame: function () {
     console.log("NEW STARTED");
-    this.props.store.dispatch(actions.gameStart(this.initialState));
+    if (!this.state.gameStarted) {
+     this.props.store.dispatch(actions.gameOver(this.state));
+    }
   },
 
   resign: function () {
