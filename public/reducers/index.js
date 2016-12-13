@@ -2,116 +2,332 @@
 
 var _ = require('lodash');
 var timer = require('../timer.js');
-var initialState = require('../initialState.js');
+// var initialState = require('../initialState.js');
 
-// Every time an action is dispatched, this function is called.
-// Using the current state and the action just performed (along with
-// any payload data associated with it), this function computes the
-// next state.
-// HOWEVER, note that you CANNOT mutate the state variable directly.
-// Instead, you want return a new, updated copy of the state in the
-// reducer each time it is called (an easy way to do this is to use
-// lodash's _.assign function).
-//
-// TODO: Implement the following cases:
-//       'STOP' - stop the animation by setting isRunning to false
-//       'STEP' - use the updateCells function below to update the cells array
-//       'CLEAR' - set the grid to an empty grid and stop the animation
-//       'RANDOM_SEED' - set the cells array to a randomly-generated grid
-//       'IMPORT_SEED' - update the cells array to the action's seed payload
-//                       and stop the animation if necessary.
-var mainReducer = function (state, action) {
-  switch (action.type) {
-  case 'RUN':
-    timer.run();
+var getReducer = function(socket, initialState) {
+  return function(state, action) {
+    switch (action.type) {
+      case 'GAME_START':
+        return _.assign({}, action.state, {
+          gameStarted: true
+        });
+
+      case 'GAME_END':
+
+        var str = (state.myScore > state.opponentScore) ? 'win' : (state.myScore === state.opponentScore) ? 'tie' : 'lose';
+        alert('GAME OVER! You ' + str + '!');
+
+        return _.assign({}, state, {
+          gameStarted: false
+        });
+
+      case 'DISC':
+        alert('YOU WIN! Opponent disconnected');
+        return _.assign({}, initialState, {
+          color: state.color,
+          myTurn: state.color === 1,
+          gameStarted: false,
+          roomName: state.roomName,
+          roomEmpty: true,
+          cells: getCells(state)
+        })
+
+
+      case 'RESIGN_OPP':
+        alert('YOU WIN! Opponent Resigned');
+        return _.assign({}, initialState, {
+          color: state.color,
+          myTurn: state.color === 1,
+          gameStarted: true,
+          roomName: state.roomName,
+          roomEmpty: state.roomEmpty,
+          cells: getCells(state)
+        })
+
+
+      case 'RESIGN':
+        if (state.gameStarted === false) {
+          return state;
+        }
+
+        alert('You Lose!');
+        socket.emit('resign', state.roomName);
+        return _.assign({}, initialState, {
+          color: state.color,
+          myTurn: state.color === 1,
+          gameStarted: true,
+          roomName: state.roomName,
+          roomEmpty: state.roomEmpty,
+          cells: getCells(state)
+        })
+
+      case 'ADDED_ROOM':
+        return _.assign({}, state, {
+          roomName: action.obj.roomName,
+          roomEmpty: (action.obj.length === 0),
+          gameStarted: action.obj.length == 1
+        })
+
+      case 'SET_COLOR':
+        console.log("SET_COLOR " + JSON.stringify(action));
+        // var ncells = updateCells(state);
+        var cells = state.cells.slice(0);
+
+        cells[27].ours = action.color === 1;
+        cells[28].ours = action.color !== 1;
+        cells[27 + 8].ours = action.color !== 1;
+        cells[28 + 8].ours = action.color === 1;
+
+
+        return _.assign({}, state, {
+          color: action.color,
+          cells: cells,
+          myTurn: action.color === 1
+        });
+
+      case 'EXPORT':
+        var data = encodeURIComponent(state.cells);
+        return document.location = '/export?data=[' + data + ']';
+
+      case 'OPP_CLICKED':
+        var cells = state.cells.slice(0);
+
+        if (state.myTurn || !state.gameStarted || !isLegal(cells, action.index)) {
+          return _.assign({}, state, {
+            cells: cells
+          });
+        }
+        var numUpd = updateBoard(cells, action.index, false);
+
+        return _.assign({}, state, {
+          cells: cells,
+          myTurn: !state.myTurn,
+          opponentScore: state.opponentScore + numUpd + 1,
+          myScore: state.myScore - numUpd,
+          gameStarted: !gameOver(state)
+        });
+
+      case 'CELL_CLICKED':
+        console.log("GAME " + state.gameStarted);
+        var cells = state.cells.slice(0);
+        if (!state.myTurn || !state.gameStarted || !isLegal(cells, action.index)) {
+          return _.assign({}, state, {
+            cells: cells
+          });
+        }
+        socket.emit('makeMove', {
+          roomName: state.roomName,
+          index: action.index
+        });
+
+        var numUpd = updateBoard(cells, action.index, true);
+        return _.assign({}, state, {
+          cells: cells,
+          myTurn: !state.myTurn,
+          myScore: state.myScore + numUpd + 1,
+          opponentScore: state.opponentScore - numUpd,
+          gameStarted: !gameOver(state)
+        });
+
+
+      case 'STOP':
+        timer.stop();
+        return _.assign({}, state, {});
+
+      case 'CLEAR':
+        timer.stop();
+        return _.assign({}, initialState, {});
+
+      case 'RANDOM_SEED':
+        var rcells = randomSeed(state);
+        return _.assign({}, state, {
+          cells: rcells
+        });
+
+      case 'IMPORT_SEED':
+        timer.stop();
+        return _.assign({}, state, {
+          cells: action.seed
+        });
+    }
     return state;
-
-  case 'STEP':
-    var ncells = updateCells(state);
-    return _.assign({}, state, {cells: ncells});
-
-  case 'EXPORT':
-    var data = encodeURIComponent(state.cells);
-    return document.location = '/export?data=[' + data + ']';
-
-  case 'CELL_CLICKED':
-    var cells = state.cells.slice(0);
-    cells[action.index] = (cells[action.index] + 1) % 3;
-    return _.assign({}, state, {cells: cells});
-
-  case 'STOP':
-    timer.stop();
-    return _.assign({}, state, {});
-
-  case 'CLEAR':
-    timer.stop();
-    return _.assign({}, initialState, {});
-
-  case 'RANDOM_SEED':
-    var rcells = randomSeed(state);
-    return _.assign({}, state, {cells: rcells}); 
-
-  case 'IMPORT_SEED':
-    timer.stop();
-    return _.assign({}, state, {cells: action.seed});
-  }
-  return state;
-};
-
-function randomSeed(state) {
-  // TODO: Return a (NEW) randomly generated array of true/false values
-  // the same length as state.cells
-  return Array.apply(null, Array(state.cells.length)).map(function () {
-    return Math.random() > .5;
-  });
+  };
 }
 
-// This is the main algorithm behind the Game of Life simulation.
-// Every time it is called, it computes based on the current state's
-// cells the NEXT state's cells and return a copy of the new cells array.
-//
-// The algorthim determines cell state based on the states of neighbouring
-// cells for each iteration according to these rules:
-//
-// 1 - Any live cell with fewer than two live neighbours dies,as if caused by
-//     under-population.
-// 2 - Any live cell with two or three live neighbours lives on to the next
-//     generation.
-// 3 - Any live cell with more than three live neighbours dies, as if by
-//     overcrowding.
-// 4 - Any dead cell with exactly three live neighbours becomes a live cell,
-//     as if by reproduction.
-//
-function updateCells(state) {
-  var newCells = new Array(state.cells.length);
-  state.cells.forEach(function (_, i) {
-    var cell = state.cells[i];
-    var live_neighbors = 0;
-    var x = i % state.x;
-    var y = Math.floor(i / state.x);
-    var l = x !== 0 && i - 1;
-    var r = x !== state.x - 1 && i + 1;
-    var t = y !== 0 && i - state.x;
-    var b = y !== state.y - 1 && i + state.x;
+function getCells(state) {
+  var side = 8;
+  var cells = Array.apply(null, Array(side * side)).map(function(c, index) {
+    var center = [27, 28, 27 + 8, 28 + 8];
 
-    var tl, tr, bl, br;
-    l && t && (tl = l - state.x);
-    l && b && (bl = l + state.x);
-    r && t && (tr = r - state.x);
-    r && b && (br = r + state.x);
-
-    [l, r, t, b, tl, bl, tr, br].forEach(function (n) {
-      state.cells[n] && live_neighbors++;
-    });
-
-    newCells[i] = (cell && (live_neighbors === 2 || live_neighbors === 3)) ||
-           (live_neighbors === 3);
+    var alive = center.includes(index);
+    return {
+      ours: true,
+      alive: alive
+    };
   });
-  return newCells;
+
+  cells[27].ours = state.color === 1;
+  cells[28].ours = state.color !== 1;
+  cells[27 + 8].ours = state.color !== 1;
+  cells[28 + 8].ours = state.color === 1;
+
+  return cells;
+}
+
+function gameOver(state) {
+  if (state.myScore + state.opponentScore + 1 !== 64) {
+    return false;
+  }
+  var str = (state.myScore > state.opponentScore) ? 'win' : (state.myScore === state.opponentScore) ? 'tie' : 'lose';
+  alert('GAME OVER! You ' + str + '!');
+  return true;
+}
+
+function indtocoord(index) {
+  return {
+    y: Math.floor(index / 8),
+    x: index % 8
+  };
+}
+
+function coordtoind(coord) {
+
+  return 8 * coord.y + coord.x
+}
+
+function l(index) {
+  if (index % 8 === 0) {
+    return -1;
+  }
+  return index - 1;
+}
+
+function r(index) {
+  if (index % 8 === 7) {
+    return -1;
+  }
+  return index + 1;
+}
+
+function u(index) {
+  if (index / 8 === 0) {
+    return -1;
+  }
+  return index - 8;
+}
+
+function d(index) {
+  if (index / 8 === 7) {
+    return -1;
+  }
+  return index + 8;
+}
+
+function lu(index) {
+  return l(u(index));
+}
+
+function ld(index) {
+  return l(d(index));
+}
+
+function ru(index) {
+  return r(u(index));
+}
+
+function rd(index) {
+  return r(d(index));
+}
+
+function inBounds(index) {
+  return index >= 0 && index < 64;
+}
+
+function inBoundsCoords(coords) {
+  return coords.x >= 0 && coords.x < 8 && coords.y >= 0 && coords.y < 8;
+}
+
+
+function isLegal(cells, index) {
+
+  console.log("INDEXX " + index + " " + inBounds(index) + " " + cells[index].alive);
+
+  if (!inBounds(index) || cells[index].alive) {
+    console.log("GGGG");
+    return false;
+  }
+  var coords = indtocoord(index);
+
+  var flag = false;
+
+  for (var i = -1; i < 2; i++) {
+    for (var j = -1; j < 2; j++) {
+      var c = {
+        x: coords.x + i,
+        y: coords.y + j
+      };
+      console.log("INDEX " + index);
+
+      if (!inBoundsCoords(c) || (i === 0 && j === 0)) {
+        continue;
+      }
+
+      if (cells[coordtoind(c)].alive) {
+        flag = true;
+      }
+    }
+  }
+
+  return flag;
+}
+
+function updateBoard(cells, index, ours) {
+  cells[index].alive = true;
+  cells[index].ours = ours;
+  var i = 0;
+  i += recUpdate(cells, u(index), u, ours).num;
+  i += recUpdate(cells, d(index), d, ours).num;
+  i += recUpdate(cells, r(index), r, ours).num;
+  i += recUpdate(cells, l(index), l, ours).num;
+
+  i += recUpdate(cells, lu(index), lu, ours).num;
+  i += recUpdate(cells, ld(index), ld, ours).num;
+  i += recUpdate(cells, ru(index), ru, ours).num;
+  i += recUpdate(cells, rd(index), rd, ours).num;
+
+  return i;
+
+}
+
+function recUpdate(cells, index, func, ours) {
+
+  console.log('rec ' + index + " ours " + ours);
+  if (!inBounds(index) || !cells[index].alive) {
+    return {
+      flag: false,
+      num: 0
+    };
+  }
+
+  if (cells[index].ours === ours) {
+    console.log('return ' + true);
+    return {
+      flag: true,
+      num: 0
+    };
+  }
+
+  var doFlip = recUpdate(cells, func(index), func, ours);
+
+  if (doFlip.flag) {
+    console.log('UPDATING ' + index + " ours " + ours);
+    cells[index].ours = ours;
+    doFlip.num += 1;
+  }
+
+  return doFlip;
 }
 
 module.exports = exports = {
-  mainReducer: mainReducer,
-  updateCells: updateCells,
-  randomSeed: randomSeed
+  mainReducer: getReducer
 };

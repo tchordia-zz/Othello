@@ -45,9 +45,9 @@ button:focus {outline:0;}
   padding: auto;
 }
 
-.container {
-  min-height: 432px;
-  min-width: 576px;
+#container {
+  width: 100%;
+  margin-left:40%;
 }
 
 .board-row:after {
@@ -56,8 +56,19 @@ button:focus {outline:0;}
   display: table;
 }
 
-.status {
-  margin-bottom: 10px;
+.info {
+  display:inline-block;
+  margin-left: 10px;
+  height: 34px;
+}
+
+.turn {
+  background: #fff;
+  border: 1px solid #999;
+  height: 10px;
+  width: 34px;
+  display:inline-block;
+  margin-left: 10px;
 }
 
 .cell {
@@ -93,6 +104,7 @@ button:focus {outline:0;}
   margin-left: 20px;
 }
 
+
 .circle {
   position: absolute;
   top: 50%;
@@ -109,6 +121,18 @@ button:focus {outline:0;}
 
 .circle.red {
   background-color: #AA1411;
+}
+
+.container{
+  width: 100%;
+  position: relative;
+  text-align:center;
+}
+
+.game-component{
+  position: absolute;
+  width: 500px;
+  margin: 0 auto;
 }
 
 /*.board-component {

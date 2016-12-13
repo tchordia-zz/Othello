@@ -10,7 +10,9 @@ var Cell = React.createClass({
     color: PropTypes.number.isRequired,
     index: PropTypes.number.isRequired,
     x: PropTypes.number.isRequired,
-    y: PropTypes.number.isRequired
+    y: PropTypes.number.isRequired,
+    alive: PropTypes.bool.isRequired,
+    ours: PropTypes.bool.isRequired,
   },
 
   getDefaultProps: function () {
@@ -20,23 +22,23 @@ var Cell = React.createClass({
       index: 0, 
       x: 0,
       y: 0,
+      alive: false, 
+      ours: true,
     };
   },
 
   onCellClick: function () {
-    // TODO: Write the code to dispatch the action corresponding to the
-    //       clicking of a cell at a particular index.
     this.props.store.dispatch(actions.cellClicked(this.props.index));
-    // console.log("click " + this.props.x + " " + this.props.y);
   },
 
   render: function () {
+    var color = this.props.ours ? this.props.color : 3 - this.props.color;
 
-    if (this.props.color == 0) {
+    if (!this.props.alive) {
       return <span className="cell-component cell" onClick={this.onCellClick}></span>;
     } else {
       return (<div className="cell-component cell" onClick={this.onCellClick}>
-                <div className={this.props.color == 1 ? "circle red" : "circle blue"}>
+                <div className={color == 1 ? "circle red" : "circle blue"}>
 
                 </div>
               </div>) ;
