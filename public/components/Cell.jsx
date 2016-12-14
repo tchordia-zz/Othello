@@ -35,10 +35,10 @@ var Cell = React.createClass({
     var color = this.props.ours ? this.props.color : 3 - this.props.color;
 
     if (!this.props.alive) {
-      return <span className="cell-component cell" onClick={this.onCellClick}></span>;
+      return <span className='cell-component cell' onClick={this.onCellClick}></span>;
     } else {
-      return (<div className="cell-component cell" onClick={this.onCellClick}>
-                <div className={color == 1 ? "circle red" : "circle blue"}>
+      return (<div className='cell-component cell' onClick={this.onCellClick}>
+                <div className={color == 1 ? 'circle red' : 'circle blue'}>
 
                 </div>
               </div>) ;

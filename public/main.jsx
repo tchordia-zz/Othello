@@ -14,22 +14,23 @@ var reducers = require('./reducers').mainReducer(socket, _.assign({}, initialSta
 var store = createStore(reducers, initialState);
 
 var g = function (func) {
-	return function (message) {
-		store.dispatch(func(message));
-	}
-}
+  return function (message) {
+    store.dispatch(func(message));
+  };
+};
 
 socket.on('makeMove', g(actions.oppMove));
 socket.on('setcolor', g(actions.setColor));
 socket.on('addedToRoom', g(actions.addedToRoom));
-socket.on('resign', g(actions.resignOpp)); 
+socket.on('resign', g(actions.resignOpp));
 socket.on('playerDisc', g(actions.disc));
-socket.on('room_taken', function() {
-	alert('room taken');
+socket.on('room_taken', function () {
+  alert('room taken');
 });
+
 socket.on('clear', g(actions.clear));
 
-var gameOfLife = <GameOfLife store={store} socket={socket}/>;
+var gameOfLife = <GameOfLife store = {store} socket = {socket}/>;
 
 document.addEventListener('DOMContentLoaded', function () {
   ReactDOM.render(

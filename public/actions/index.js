@@ -2,15 +2,15 @@
 
 exports.setColor = function (color) {
   return {
-    type:'SET_COLOR',
-    color: color 
+    type: 'SET_COLOR',
+    color: color
   };
 };
 
 exports.oppMove = function (index) {
   return {
-    type:'OPP_CLICKED',
-    index: index 
+    type: 'OPP_CLICKED',
+    index: index
   };
 };
 
@@ -18,12 +18,12 @@ exports.addedToRoom = function (obj) {
   return {
     type: 'ADDED_ROOM',
     obj: obj
-  }
-}
+  };
+};
 
 exports.gameStart = function (state) {
   return {
-    type:'GAME_START',
+    type: 'GAME_START',
     state: state
   };
 };
@@ -31,44 +31,44 @@ exports.gameStart = function (state) {
 exports.disc = function () {
   return {
     type: 'DISC'
-  }
-}
+  };
+};
 
 exports.gameOver = function (state) {
   return {
-    type:'GAME_END'
+    type: 'GAME_END'
   };
 };
 
 exports.resign = function () {
   return {
-    type:'RESIGN'
+    type: 'RESIGN'
   };
 };
 
 exports.resignOpp = function () {
   return {
-    type:'RESIGN_OPP'
+    type: 'RESIGN_OPP'
   };
 };
 
-exports.clear = function() {
+exports.clear = function () {
   return {
-    type: "CLEAR"
-  }
-}
-
-
-exports.cellClicked = function (index ) {
-  return {
-    type:'CELL_CLICKED',
-    index:index
+    type: 'CLEAR'
   };
 };
 
-exports.messageReceived = function(message) {
-    return {
-    type:'MESSAGE_RECEIVED',
+
+exports.cellClicked = function (index) {
+  return {
+    type: 'CELL_CLICKED',
+    index: index
+  };
+};
+
+exports.messageReceived = function (message) {
+  return {
+    type: 'MESSAGE_RECEIVED',
     message: message
   };
-}
+};
